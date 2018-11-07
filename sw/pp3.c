@@ -555,10 +555,12 @@ int p16a_program_config(void) {
     p16a_inc_pointer(7);
     p16a_program_page(2 * 0x8007, 2, 1);
     p16a_program_page(2 * 0x8008, 2, 1);
+
     if ((chip_family == CF_P16F_B) || (chip_family == CF_P16F_D))
         p16a_program_page(2 * 0x8009, 2, 1);
     if (chip_family == CF_P16F_D)
         p16a_program_page(2 * 0x800A, 2, 1);
+
     return 0;
 }
 
@@ -660,6 +662,7 @@ int p18a_write_page(unsigned char *data, int address, unsigned char num) {
     if (empty == 1) {
         if (verbose > 3)
             flsprintf(stdout, "~");
+
         return 0;
     }
 
@@ -780,17 +783,22 @@ int p16c_write_page(unsigned char *data, int address, unsigned char num) {
     unsigned char i, empty;
     address = address / 2;
     empty = 1;
+
     for (i = 0; i < num; i = i + 2) {
         if ((data[i] != 0xFF) || (data[i + 1] != 0xFF))
             empty = 0;
     }
+
     if (verbose > 2)
         flsprintf(stdout, "Writing A page of %d bytes at 0x%6.6x\n", num, address);
+
     if (empty == 1) {
         if (verbose > 3)
             flsprintf(stdout, "~");
+
         return 0;
     }
+
     putByte(0x42);
     putByte(4 + num);
     putByte(num);
@@ -809,8 +817,10 @@ int p16c_get_devid(void) {
     p16c_read_page(tdat, 0x8006 * 2, 4);
     devid_hi = tdat[(2 * 0) + 1];
     devid_lo = tdat[(2 * 0) + 0];
+
     if (verbose > 2)
         flsprintf(stdout, "Getting devid - lo:%2.2x,hi:%2.2x\n", devid_lo, devid_hi);
+
     retval = (((unsigned int)(devid_lo)) << 0) + (((unsigned int)(devid_hi)) << 8);
     retval = retval & devid_mask;
     return retval;
@@ -819,6 +829,7 @@ int p16c_get_devid(void) {
 int p16c_write_single_cfg(unsigned char data1, unsigned char data2, int address) {
     if (verbose > 2)
         flsprintf(stdout, "Writing cfg 0x%2.2x 0x%2.2x at 0x%6.6x\n", data1, data2, address);
+
     putByte(0x44);
     putByte(6);
     putByte(0);
@@ -834,6 +845,7 @@ int p16c_write_single_cfg(unsigned char data1, unsigned char data2, int address)
 int p18q_write_single_cfg(unsigned char data1, unsigned char data2, int address) {
     if (verbose > 2)
         flsprintf(stdout, "Writing cfg 0x%2.2x 0x%2.2x at 0x%6.6x\n", data1, data2, address);
+
     putByte(0x45);
     putByte(6);
     putByte(0);
@@ -854,8 +866,10 @@ int p18q_write_page(unsigned char *data, int address, unsigned char num) {
         if ((data[i] != 0xFF) || (data[i + 1] != 0xFF))
             empty = 0;
     }
+
     if (verbose > 2)
         flsprintf(stdout, "Writing A page of %d bytes at 0x%6.6x\n", num, address);
+
     if (empty == 1) {
         if (verbose > 3)
             flsprintf(stdout, "~");
@@ -1261,6 +1275,7 @@ int main(int argc, char *argv[]) {
                     printf(".");
                     fflush(stdout);
                 }
+
                 if ((chip_family == CF_P16F_A) || (chip_family == CF_P16F_B) || (chip_family == CF_P16F_D))
                     p16a_read_page(tdat, page_size);
                 else if ((chip_family == CF_P16F_C))
@@ -1275,9 +1290,7 @@ int main(int argc, char *argv[]) {
                 }
             }
             if (verbose > 0)
-                printf("\n");
-            if (verbose > 0)
-                printf("Verifying config\n");
+                printf("\nVerifying config\n");
 
             if ((chip_family == CF_P16F_A) || (chip_family == CF_P16F_B) || (chip_family == CF_P16F_D)) {
                 config = p16a_get_config(7);
@@ -1287,8 +1300,10 @@ int main(int argc, char *argv[]) {
                         printf("config 1 OK: %4.4X\n", config);
                 } else
                     printf("config 1 error: E:0x%4.4X R:0x%4.4X\n", config, econfig);
+
                 config = p16a_get_config(8);
                 econfig = (((unsigned int)(file_image[2 * 0x8008])) << 0) + (((unsigned int)(file_image[2 * 0x8008 + 1])) << 8);
+
                 if (config == econfig) {
                     if (verbose > 1)
                         printf("config 2 OK: %4.4X\n", config);
