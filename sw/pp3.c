@@ -102,13 +102,6 @@ void putByte(int byte) {
         comErr("Serial port failed to send a byte, write returned %d\n", n);
 }
 
-void putBytes(unsigned char *data, int len) {
-
-    int i;
-    for (i = 0; i < len; i++)
-        putByte(data[i]);
-}
-
 int getByte() {
     char buf;
     int n = read(com, &buf, 1);
@@ -120,6 +113,7 @@ int getByte() {
     comErr("Serial port failed to receive a byte, read returned %d\n", n);
     return -1; // never reached
 }
+
 #else
 
 HANDLE port_handle;
@@ -170,19 +164,13 @@ void initSerialPort() {
         exit(0);
     }
 }
+
 void putByte(int byte) {
     int n;
     if (verbose > 3)
         flsprintf(stdout, "TX: 0x%02X\n", byte);
     WriteFile(port_handle, &byte, 1, (LPDWORD)((void *)&n), NULL);
     if (n != 1)
-        comErr("Serial port failed to send a byte, write returned %d\n", n);
-}
-
-void putBytes(unsigned char *data, int len) {
-    int n;
-    WriteFile(port_handle, data, len, (LPDWORD)((void *)&n), NULL);
-    if (n != len)
         comErr("Serial port failed to send a byte, write returned %d\n", n);
 }
 
@@ -206,6 +194,12 @@ int getByte() {
 //*********************************************************************************//
 //*********************************************************************************//
 //*********************************************************************************//
+
+void putBytes(unsigned char *data, int len) {
+    int i;
+    for (i = 0; i < len; i++)
+        putByte(data[i]);
+}
 
 void comErr(char *fmt, ...) {
     char buf[500];
