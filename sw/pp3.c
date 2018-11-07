@@ -107,13 +107,6 @@ void putBytes(unsigned char *data, int len) {
     int i;
     for (i = 0; i < len; i++)
         putByte(data[i]);
-    /*
-    	if (verbose>3)
-    		flsprintf(stdout,"TXP: %d B\n", len);
-    int n = write(com, data, len);
-    	if (n != len)
-    		comErr("Serial port failed to send %d bytes, write returned %d\n", len,n);
-    */
 }
 
 int getByte() {
@@ -187,11 +180,6 @@ void putByte(int byte) {
 }
 
 void putBytes(unsigned char *data, int len) {
-    /*
-    int i;
-    for (i=0;i<len;i++)
-    	putByte(data[i]);
-    */
     int n;
     WriteFile(port_handle, data, len, (LPDWORD)((void *)&n), NULL);
     if (n != len)
@@ -488,10 +476,6 @@ int p16a_program_page(unsigned int ptr, unsigned char num, unsigned char slow) {
     putByte(num + 2);
     putByte(num);
     putByte(slow);
-    /*
-    for (i=0;i<num;i++)
-    	putByte(file_image[ptr+i]);
-    	*/
     putBytes(&file_image[ptr], num);
     getByte();
     return 0;
@@ -608,12 +592,6 @@ int p18d_mass_erase(void) {
     p18d_mass_erase_part(0x800204);
     p18d_mass_erase_part(0x800404);
     p18d_mass_erase_part(0x800804);
-    /*
-	p18d_mass_erase_part(0x801004);
-	p18d_mass_erase_part(0x802004);
-	p18d_mass_erase_part(0x804004);
-	p18d_mass_erase_part(0x808004);
-	*/
     p18d_mass_erase_part(0x800004);
     p18d_mass_erase_part(0x800005);
     p18d_mass_erase_part(0x800002);
@@ -743,7 +721,6 @@ int p16c_read_page(unsigned char *data, int address, unsigned char num) {
     for (i = 0; i < num; i++) {
         *data++ = getByte();
     }
-    //    for (i=0; i<num; i++) if (verbose>2) flsprintf(stdout,"%2.2x ", data[i]);
 
     return 0;
 }
