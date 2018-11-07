@@ -24,21 +24,25 @@ char *PP_VERSION = "0.99";
 
 #define PROGMEM_LEN 260000
 #define CONFIG_LEN 32
-#define CF_P16F_A 0
-#define CF_P18F_A 1
-#define CF_P16F_B 2
-#define CF_P18F_B 3
-#define CF_P18F_C 4
-#define CF_P18F_D 5
-#define CF_P18F_E 6
-#define CF_P16F_C 7
-#define CF_P16F_D 8
-#define CF_P18F_F 9
-#define CF_P18F_G 10
-#define CF_P18F_Q 11
+
+typedef enum {
+    CF_P16F_A = 0,
+    CF_P18F_A,
+    CF_P16F_B,
+    CF_P18F_B,
+    CF_P18F_C,
+    CF_P18F_D,
+    CF_P18F_E,
+    CF_P16F_C,
+    CF_P16F_D,
+    CF_P18F_F,
+    CF_P18F_G,
+    CF_P18F_Q
+} pic_type_t;
 
 int verbose = 1, verify = 1, program = 1, sleep_time = 0;
-int devid_expected, devid_mask, baudRate, com, flash_size, page_size, chip_family, config_size;
+int devid_expected, devid_mask, baudRate, com, flash_size, page_size, config_size;
+pic_type_t chip_family;
 unsigned char file_image[70000], progmem[PROGMEM_LEN], config_bytes[CONFIG_LEN];
 
 //*********************************************************************************//
