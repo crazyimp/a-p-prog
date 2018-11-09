@@ -407,24 +407,17 @@ int setCPUtype(char *cpu) {
                     chip_family = CF_P18F_Q;
 
                 // adjust some parameters
-                if (chip_family == CF_P18F_A)
-                    config_size = 16;
-                else if (chip_family == CF_P18F_B)
+                if (chip_family == CF_P18F_B) {
                     config_size = 8;
-                else if (chip_family == CF_P18F_C) {
+                } else if (chip_family == CF_P18F_C) {
                     // related to CF_P18F_B, but config size differs
                     config_size = 16;
                     chip_family = CF_P18F_B;
-                }
-                else if (chip_family == CF_P18F_D)
+                } else if ((chip_family == CF_P18F_A) || (chip_family == CF_P18F_D) || (chip_family == CF_P18F_E)) {
                     config_size = 16;
-                else if (chip_family == CF_P18F_E)
-                    config_size = 16;
-                else if (chip_family == CF_P18F_F)
+                } else if ((chip_family == CF_P18F_F) || (chip_family == CF_P18F_Q)) {
                     config_size = 12;
-                else if (chip_family == CF_P18F_Q)
-                    config_size = 12;
-                else if (chip_family == CF_P18F_G) {
+                } else if (chip_family == CF_P18F_G) {
                     // related to CF_P18F_F, but config size differs
                     config_size = 10;
                     chip_family = CF_P18F_F;
@@ -448,8 +441,8 @@ int p16a_rst_pointer(void) {
     else
         putByte(0x03); //operation number
 
-    putByte(0x00);     //number of bytes remaining
-    getByte();         //return result - no check for its value
+    putByte(0x00); //number of bytes remaining
+    getByte();     //return result - no check for its value
     return 0;
 }
 
@@ -805,8 +798,10 @@ int p16c_write_page(unsigned char *data, int address, unsigned char num) {
     putByte((address >> 16) & 0xFF);
     putByte((address >> 8) & 0xFF);
     putByte((address >> 0) & 0xFF);
+
     for (i = 0; i < num; i++)
         putByte(data[i]);
+
     getByte();
     return 0;
 }
@@ -873,6 +868,7 @@ int p18q_write_page(unsigned char *data, int address, unsigned char num) {
     if (empty == 1) {
         if (verbose > 3)
             flsprintf(stdout, "~");
+
         return 0;
     }
     putByte(0x46);
@@ -899,26 +895,28 @@ int p16c_write_cfg(void) {
 int prog_enter_progmode(void) {
     if (verbose > 2)
         flsprintf(stdout, "Entering programming mode\n");
-    if (chip_family == CF_P16F_A)
+
+    switch (chip_family) {
+    case CF_P16F_A:
+    case CF_P16F_B:
+    case CF_P16F_D:
         putByte(0x01);
-    else if (chip_family == CF_P16F_B)
-        putByte(0x01);
-    else if (chip_family == CF_P16F_D)
-        putByte(0x01);
-    else if (chip_family == CF_P18F_A)
+        break;
+    case CF_P18F_A:
+    case CF_P18F_B:
+    case CF_P18F_D:
+    case CF_P18F_E:
         putByte(0x10);
-    else if (chip_family == CF_P18F_B)
-        putByte(0x10);
-    else if (chip_family == CF_P18F_D)
-        putByte(0x10);
-    else if (chip_family == CF_P18F_E)
-        putByte(0x10);
-    else if (chip_family == CF_P16F_C)
+        break;
+    case CF_P16F_C:
+    case CF_P18F_F:
+    case CF_P18F_Q:
         putByte(0x40);
-    else if (chip_family == CF_P18F_F)
-        putByte(0x40);
-    else if (chip_family == CF_P18F_Q)
-        putByte(0x40);
+        break;
+    default:
+        // TODO abort?
+        break;
+    }
     putByte(0x00);
     getByte();
     return 0;
@@ -948,8 +946,7 @@ int prog_get_device_id(void) {
         devid = (((unsigned int)(mem_str[1])) << 8) + (((unsigned int)(mem_str[0])) << 0);
         devid = devid & devid_mask;
         return devid;
-    }
-    else if ((chip_family == CF_P18F_F) || (chip_family == CF_P18F_Q)) {
+    } else if ((chip_family == CF_P18F_F) || (chip_family == CF_P18F_Q)) {
         p16c_read_page(mem_str, 0x3FFFFE * 2, 2);
         devid = (((unsigned int)(mem_str[1])) << 8) + (((unsigned int)(mem_str[0])) << 0);
         devid = devid & devid_mask;
@@ -1028,8 +1025,7 @@ int parse_hex(char *filename, unsigned char *progmem, unsigned char *config) {
                     printf("CB ");
                 for (i = 0; i < line_len; i++)
                     config[i] = line_content[i];
-            }
-            else if ((chip_family == CF_P18F_B) && (effective_address == (flash_size - config_size))) {
+            } else if ((chip_family == CF_P18F_B) && (effective_address == (flash_size - config_size))) {
                 if (verbose > 2)
                     printf("CB ");
                 for (i = 0; i < line_len; i++)
@@ -1151,10 +1147,10 @@ int main(int argc, char *argv[]) {
                 }
             }
 
-            if (verbose > 0)
+            if (verbose > 0) {
                 printf("\n%d pages programmed\n", pages_performed);
-            if (verbose > 0)
                 printf("Programming config\n");
+            }
 
             for (i = 0; i < config_size; i = i + 2) //write config bytes for PIC18Fxxxx and 18FxxKxx devices
             {
@@ -1252,10 +1248,9 @@ int main(int argc, char *argv[]) {
                 else if ((chip_family == CF_P16F_C))
                     p16c_write_page(progmem + i, i, page_size);
             }
+
             if (verbose > 0)
-                printf("\n");
-            if (verbose > 0)
-                printf("Programming config\n");
+                printf("\nProgramming config\n");
 
             if ((chip_family == CF_P16F_A) || (chip_family == CF_P16F_B) || (chip_family == CF_P16F_D))
                 p16a_program_config();
@@ -1309,8 +1304,7 @@ int main(int argc, char *argv[]) {
                         printf("config 2 OK: %4.4X\n", config);
                 } else
                     printf("config 2 error: E:0x%4.4X R:0x%4.4X\n", config, econfig);
-            }
-            else if (chip_family == CF_P16F_C) {
+            } else if (chip_family == CF_P16F_C) {
                 p16c_read_page(tdat, 0x8007 * 2, page_size);
                 for (j = 0; j < 10; j++) {
                     if (config_bytes[j] != tdat[j]) {
